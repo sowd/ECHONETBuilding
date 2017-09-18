@@ -130,7 +130,7 @@ public class SoftAirconImpl extends HomeAirConditioner {
     try {
       inform().reqInformOperationStatus().send();
     } catch (IOException e) { e.printStackTrace();}
-    setupImage() ;
+    //setupImage() ;
     return true;
   }
   // 現在の電源状態を問われた時の応答です。
@@ -159,7 +159,7 @@ public class SoftAirconImpl extends HomeAirConditioner {
     try {
       inform().reqInformOperationModeSetting().send();
     } catch (IOException e) { e.printStackTrace();}
-    setupImage() ;
+    //setupImage() ;
     
     return true;
   }
@@ -181,7 +181,7 @@ public class SoftAirconImpl extends HomeAirConditioner {
   // 温度の変更です
   protected boolean setSetTemperatureValue(byte[] edt) {
     temp = mTemperature[0] = edt[0];
-    setupImage() ;
+    //setupImage() ;
     return true;
   }
 
@@ -196,34 +196,9 @@ public class SoftAirconImpl extends HomeAirConditioner {
       e.printStackTrace();
     }
   }
-
-  // 表示を入れ替える関数です
-  protected void setupImage(){
-    if( pw==0 ){   // on
-      switchLayer( "AirconPower","On" ) ;
-      switch(mode){
-        case 0 : case 1 :          // 0x41:Auto, 0x42:Cool 
-          switchLayer( "AirconWind","Cool" ) ; break ;
-        case 2 :                   // 0x43:Heat
-          switchLayer( "AirconWind","Hot" ) ; break ;
-        case 3 :                   // 0x44:Dry
-          switchLayer( "AirconWind","Dry" ) ; break ;
-        case 4 : case 5 :          // 0x45:Wind, 0x46:Others
-          switchLayer( "AirconWind","Wind" ) ; break ;
-      }
-    } else {       // off
-      switchLayer( "AirconPower","Off" ) ;
-      switchLayer( "AirconWind",-1 ) ;
-    }
-  }
-
 }
 
 SoftAirconImpl aircon ;
-
-
-
-
 
 //////////////////////////////
 //////////////////////////////
@@ -266,7 +241,7 @@ public class SoftLightImpl extends GeneralLighting {
     try {
       inform().reqInformOperationStatus().send();
     } catch (IOException e) { e.printStackTrace();}
-    setupImage() ;
+    //setupImage() ;
     return true;
   }
   
@@ -294,11 +269,6 @@ public class SoftLightImpl extends GeneralLighting {
   protected boolean setLightingModeSetting(byte[] edt) { return false; }
   protected byte[] getLightingModeSetting(){
     return null;
-  }
-
-  // 表示を入れ替える関数です
-  protected void setupImage(){
-    switchLayer( "LightPower",light_pw==0?"On":"Off" ) ;
   }
 }
 
@@ -356,7 +326,7 @@ public class SoftBlindImpl extends ElectricallyOperatedShade {
     try {
       inform().reqInformOpenCloseSetting().send();
     } catch (IOException e) { e.printStackTrace();}
-    setupImage() ;
+    //setupImage() ;
     
     return true;
   }
@@ -386,10 +356,6 @@ public class SoftBlindImpl extends ElectricallyOperatedShade {
   //protected byte[] getOpenCloseSetting() {return null;}
   //protected byte[] getOpenCloseSetting() {  return null;}
 
-  // 表示を入れ替える関数です
-  protected void setupImage(){
-    switchLayer( "CurtainState",blind_open==0?"Open":"Close" ) ;
-  }
 }
 
 SoftBlindImpl blind ;
@@ -491,7 +457,7 @@ public class SoftLockImpl extends ElectricLock {
     try {
       inform().reqInformLockSetting1().send();
     } catch (IOException e) { e.printStackTrace();}
-    setupImage() ;
+    //setupImage() ;
     
     return true;
   }
@@ -510,11 +476,6 @@ public class SoftLockImpl extends ElectricLock {
     }catch (IOException e){
       e.printStackTrace();
     }
-  }
-
-  // 表示を入れ替える関数です
-  protected void setupImage(){
-    //switchLayer( "CurtainState",blind_open==0?"Open":"Close" ) ;
   }
 }
 
@@ -827,75 +788,21 @@ int getIntValueFrom4Bytes( byte[] srcArray,int srcStartIndex ){
 	    |  (int)(srcArray[srcStartIndex+3]&0xFF) ;
 }
 
-
-
-
-
-
-
-
-
-
-
 ControlP5 cp5;
 
-JSONObject backImgJSON ;
-String backImgPath = "_f_Back/" ;
-
-HashMap<Integer,PImage> imgIdToPImageMap ;
-HashMap<String,JSONObject> imgSwitchLayers = new HashMap<String,JSONObject>() ;
-HashMap<String,Integer> imgTypeMap = new HashMap<String,Integer>() ;
-final int STACKLAYERS = 0 , ACCUMLAYERS = 1 , SWITCHLAYERS = 2 , ANIMLAYERS = 3
-  , GAMELAYERS = 4 , IMAGELAYER = 5 , AREALAYER = 6 ;
-
-
-
-String[] pwBtns = {"On","Off"} ;
-String[] modeBtns = {"Auto","Cool","Heat","Dry","Wind"} ;
-String[] tempBtns = {"Up","Down"} ;
-String[] lightBtns = {"LightOn","LightOff"} ;
-String[] blindBtns = {"CurtainOpen","CurtainClose"} ;
-String[] lockBtns = {"LockKey","UnlockKey"} ;
+PImage bgImg ;
 
 void settings() {
-  backImgJSON = loadJSONObject(backImgPath+"setup.json") ;
-  size(backImgJSON.getInt("width"),backImgJSON.getInt("height"));
+  bgImg = loadImage("FloorPlans/1.jpg");
+  size(800,480);
 }
 
-void setup() {
-  // Setup imgTypeMap
-  imgTypeMap.put("stacklayers",STACKLAYERS) ;    imgTypeMap.put("accumlayers",ACCUMLAYERS) ;
-  imgTypeMap.put("switchlayers",SWITCHLAYERS) ;  imgTypeMap.put("animlayers",ANIMLAYERS) ;
-  imgTypeMap.put("gamelayers",GAMELAYERS) ;      imgTypeMap.put("image",IMAGELAYER) ;
-  imgTypeMap.put("area",AREALAYER) ;
-
-  imgIdToPImageMap = new HashMap<Integer,PImage>() ;
-  setupImages( backImgJSON ) ;
-  
-  cp5 = new ControlP5(this);
+void setup() {  
+/*  cp5 = new ControlP5(this);
   // The background image must be the same size as the parameters
   // into the size() method. In this program, the size of the image
   // is 650 x 360 pixels.
-
-  for( int pbi=0;pbi<pwBtns.length;++pbi )
-    cp5.addButton(pwBtns[pbi]).setPosition(582+pbi*35,8).setSize(30,15) ;
-  for( int mbi=0;mbi<modeBtns.length;++mbi )
-    cp5.addButton(modeBtns[mbi]).setPosition(582+mbi*35,33).setSize(30,15) ;
-  for( int ubi=0;ubi<tempBtns.length;++ubi )
-    cp5.addButton(tempBtns[ubi]).setPosition(582+(ubi+3)*35,8).setSize(30,15) ;
-
-  for( int li=0;li<lightBtns.length;++li )
-    cp5.addButton(lightBtns[li]).setPosition(75,200+li*20).setSize(40,15) ;
-
-  for( int li=0;li<blindBtns.length;++li )
-    cp5.addButton(blindBtns[li]).setPosition(240,50+li*20).setSize(65,15) ;
-
-  cp5.addSlider("RoomTempSlider").setPosition(193,50).setSize(5,50).setRange(-100,400)
-    .setLabelVisible(false);//.setColorForeground(0xdceffa);
-
-  for( int li=0;li<lockBtns.length;++li )
-    cp5.addButton(lockBtns[li]).setPosition(780,400+li*20).setSize(55,15) ;
-
+*/
   // System.outにログを表示するようにします。
   // Echo.addEventListener( new Echo.Logger(System.out) ) ;
 
@@ -927,226 +834,17 @@ void setup() {
 
       room_temp_x10 = ((exTempSensor.mTemp[0]&0xff)<<8) | (exTempSensor.mTemp[1]&0xff) ;
       if( room_temp_x10 > 0x8000 ) room_temp_x10 = room_temp_x10 - 0x10000 ;
-      cp5.getController("RoomTempSlider").setValue(room_temp_x10) ;
-
-      //httpserv = new HTTPServer(this,31413,aircon,light,blind,exTempSensor,lock) ;
-
   } catch( IOException e){ e.printStackTrace(); }
 
 
 }
 
-void setupImages( JSONObject node ){
-  JSONArray ja ;
-  switch(imgTypeMap.get( node.getString("type") ) ){
-    case STACKLAYERS :
-      ja = node.getJSONArray("contents") ;
-      for( int ji=0;ji<ja.size();++ji )
-        setupImages(ja.getJSONObject(ji)) ;
-      break ;
-    case SWITCHLAYERS :
-      imgSwitchLayers.put(node.getString("key"),node) ;
-    case ACCUMLAYERS :
-      ja = node.getJSONArray("contents") ;
-      for( int ji=0;ji<ja.size();++ji )
-        setupImages(ja.getJSONObject(ji)) ;
-      try {
-        if( node.getInt("cid")<-1 || node.getInt("cid") >= ja.size() )
-          node.setInt("cid",0) ;
-      } catch (Exception e){node.setInt("cid",0) ;} ; 
-      break ;
-    case ANIMLAYERS :
-      //println("Skip animlayers.") ;
-      break ;
-    case GAMELAYERS :
-      //println("Skip gamelayer.") ;
-      break ;
-    case IMAGELAYER :
-      if( node.getString("name").equals("icon") ) break ;
-      //println("Image \""+node.getString("name")+"\" path = "+backImgPath+node.getString("url")) ;
-      int imgID = imgIdToPImageMap.size();
-      node.setInt("img_id",imgID) ;
-      imgIdToPImageMap.put(imgID,loadImage(backImgPath+node.getString("url"))) ; 
-      break ;
-    case AREALAYER :
-      //println("Skip arealayer.") ;
-      break ;
-  }
-}
-
-void switchLayer( String keyname , int cid ){
-  JSONObject node = imgSwitchLayers.get(keyname) ;
-  if( node == null ) return ;
-  node.setInt( "cid",cid ) ;
-}
-
-void switchLayer( String keyname , String valuename ){
-  JSONObject node = imgSwitchLayers.get(keyname) ;
-  if( node == null ) return ;
-  if( valuename == null || valuename.equals("off") ){
-    node.setInt( "cid",-1 ) ;
-    return ;
-  }
-  JSONArray ja = node.getJSONArray("contents") ;
-  for( int ji=0;ji<ja.size();++ji ){
-    if( ja.getJSONObject(ji).getString("value").equals(valuename) ){
-      node.setInt( "cid",ji ) ;
-      break ;
-    }
-  }
-}
-
-int smartMeterDataUpdateCountdown = 0 ;
-float[] smartMeterDataCache ;
-
 void draw() {
-  drawImages(backImgJSON) ;
+//  drawImages(backImgJSON) ;
   // Draw temperature
-  fill(0, 102, 153) ;
-  textSize(15) ;
-  text(temp+"℃", 582+35*2,8+15);
-
-  exTempSensor.setTemp(room_temp_x10 = (int)(cp5.getController("RoomTempSlider").getValue())) ;
-  text(String.format("%.1f℃",room_temp_x10*0.1), 160,48);
-
-  // selected option display near buttoons
-  stroke(204, 102, 0);
-  strokeWeight(3);
-  line( 582+  pw*35,25 , 582+pw*35+28,25 ) ;
-  line( 582+mode*35,50 , 582+mode*35+28,50 ) ;
-  // Light
-  line( 72,200+light_pw*20 ,72,200+light_pw*20+13 ) ;
-  // Blind
-  line( 237,50+blind_open*20 ,237,50+blind_open*20+13 ) ;
-  // Door lock
-  line( 777,400+(1-lock_locked)*20 ,777,400+(1-lock_locked)*20+13 ) ;
-
-  // Smart meter related
-  if( smartMeterDataCache == null || --smartMeterDataUpdateCountdown < 0 ){
-	smartMeterDataUpdateCountdown = SMART_METER_DATA_UPDATE_INTERVAL ;
-	final float cumUnit = smartMeter.getCumUnit() ;
-
-	byte days = (byte)(smartMeter.cumLog==null?SMART_METER_LOG_START_DAY+1:smartMeter.cumLog.length/48) ;
-	smartMeterDataCache = new float[days*48] ;
-	byte[] buf ;
-	int smi = 0 ;
-	for( int day=days-1;day>=0;--day ){
-		smartMeter.setDayForWhichTheHistoricalDataOfMeasuredCumulativeAmountsOfElectricEnergyIsToBeRetrieved( new byte[]{(byte)day}) ;
-		buf = smartMeter.getHistoricalDataOfMeasuredCumulativeAmountsOfElectricEnergyNormalDirection() ;
-
-		for( int si=0;si<48;++si ){
-			int lv = getIntValueFrom4Bytes( buf,2+si*4 ) ;
-			smartMeterDataCache[ smi++ ] = (lv<0?-1:lv*cumUnit) ;
-		}
-	}
-  }
-
-  {
-    // Draw smart meter data
-    final int sm_x=10,sm_y=400,sm_w=300,sm_h=70 ;
-    fill( 0, 102, 153, 128 ) ;
-    strokeWeight(0) ;
-    rect( sm_x,sm_y,sm_w,sm_h ) ;
-    fill( 255,255,255 ) ;
-    textSize(13) ;
-
-    // History
-    final int sday_max = (int)(smartMeterDataCache.length/48) ;
-
-    // The index of cached data
-    float prev_val = 0 , sm_mul = 0.7f / (smartMeter.MAX_CUMENERGY_PER_HOUR/2) ;
-    int prev_x = sm_x ;
-    strokeWeight(2) ;
-    for( int smi = 1 ; smi < smartMeterDataCache.length ; ++smi ){
-	int cur_x = sm_x + sm_w * smi / smartMeterDataCache.length ;
-
-	if( (smi%48) == 0 ){
-		stroke(180) ;
-		line(cur_x,sm_y,cur_x,sm_y+sm_h) ;
-	}
-
-
-	float cur_val ;
-	if( smartMeterDataCache[smi] < 0 || smartMeterDataCache[smi-1] < 0 )
-		cur_val = -1 ;
-	else	cur_val = smartMeterDataCache[smi] - smartMeterDataCache[smi-1] ;
-
-	int py = sm_y + (int)(sm_h * (1.0f-prev_val * sm_mul)) ;
-	int cy = sm_y + (int)(sm_h * (1.0f-cur_val  * sm_mul)) ;
-
-	if( prev_val >= 0 && cur_val >= 0 ){
-		stroke(255) ;
-		line(prev_x,py,cur_x,cy) ;
-	} else if( prev_val < 0 && cur_val < 0 ){
-		stroke(255,0,0) ;
-		line(prev_x,sm_y+sm_h-1,cur_x,sm_y+sm_h-1) ;
-		cur_val = -1 ;
-	}
-	prev_x = cur_x ;
-	prev_val = cur_val ;
-    }
-
-    // Instantaneous
-    text( "Smart meter / Using "+ smartMeter.getInstantaneousEnergy() +" W", 15 , 415 ) ;
-  }
+  //fill(0, 102, 153) ;
+  //textSize(15) ;
+  //text(temp+"℃", 582+35*2,8+15);
+  
+    background(bgImg);
 }
-
-void drawImages( JSONObject node ){
-  JSONArray ja ;
-  switch(imgTypeMap.get( node.getString("type") ) ){
-    case STACKLAYERS :
-      ja = node.getJSONArray("contents") ;
-      for( int ji=ja.size()-1;ji>=0;--ji )
-        drawImages(ja.getJSONObject(ji)) ;
-      break ;
-    case ACCUMLAYERS :
-    case SWITCHLAYERS :
-      ja = node.getJSONArray("contents") ;
-      int cid = node.getInt("cid") ;
-      if( cid >= 0 )
-        drawImages(ja.getJSONObject(cid)) ;
-      break ;
-
-    case IMAGELAYER :
-      if( node.getString("name").equals("icon") ) break ;
-      image( imgIdToPImageMap.get(node.getInt("img_id")) , node.getInt("x") , node.getInt("y")) ;
-      break ;
-
-    case ANIMLAYERS :
-    case GAMELAYERS :
-    case AREALAYER :
-      break ;
-  }
-}
-
-// Aircon switches
-public void On(){
-  aircon.setOperationStatusBoolean(true) ;
-}
-public void Off(){
-   aircon.setOperationStatusBoolean(false) ;
-
- }
-public void Auto(){ aircon.setOperationModeSettingInt(0) ; }
-public void Cool(){ aircon.setOperationModeSettingInt(1) ; }
-public void Heat(){ aircon.setOperationModeSettingInt(2) ; }
-public void Dry(){ aircon.setOperationModeSettingInt(3) ; }
-public void Wind(){ aircon.setOperationModeSettingInt(4) ; }
-public void Up(){ aircon.setTemperatureValueInt(temp+1) ; }
-public void Down(){ aircon.setTemperatureValueInt(temp-1) ; }
-
-// Light switches
-public void LightOn(){
-  light.setOperationStatusBoolean(true) ;
-}
-public void LightOff(){
-  light.setOperationStatusBoolean(false) ;
-}
-
-// Blind switches
-public void CurtainOpen(){ blind.setOpenCloseSettingBoolean(true) ; }
-public void CurtainClose(){ blind.setOpenCloseSettingBoolean(false) ; }
-
-// Lock
-public void LockKey(){ lock.setLockSetting1Boolean(true) ; }
-public void UnlockKey(){ lock.setLockSetting1Boolean(false) ; }
