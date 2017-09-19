@@ -25,7 +25,8 @@ void settings() {
 }
 
 void setup() {  
-/*  cp5 = new ControlP5(this);
+  noCursor();
+  /*  cp5 = new ControlP5(this);
   // The background image must be the same size as the parameters
   // into the size() method. In this program, the size of the image
   // is 650 x 360 pixels.
