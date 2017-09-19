@@ -4,7 +4,7 @@ public class MyNodeProfile extends NodeProfile {
   byte[] mManufactureCode = {0,0,0};  // 0x8A
   byte[] mStatus = {0x30};            // 0x80
   byte[] mVersion = {1,1,1,0};        // 0x82
-  byte[] mIdNumber = {(byte)0xFE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};  // 0x83
+  byte[] mIdNumber = {(byte)0xFE,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,floor /*0*/};  // 0x83
   byte[] mUniqueId = {0,0};           // 0xBF 
   @Override
   protected byte[] getManufacturerCode() {return mManufactureCode;}

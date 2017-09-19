@@ -4,27 +4,49 @@ import controlP5.*;
 
 import com.sonycsl.echo.Echo;
 
+final int floor = 1; // 1,2 or 3
+
+final boolean bClickMode = false ;
+
 ControlP5 cp5;
 PImage bgImg ;
 
-final int lightpos[][] = {
-{209,77},{275,79},{320,69},{322,100},{359,57},{347,78},{344,101},{364,89},{399,55},{387,86},{407,78},{408,100},{430,63},{428,92},{209,145},{271,145},{326,118},{363,116},{400,116},{207,193},{228,190},{270,191},{206,245},{206,275},{276,238},{274,280},{206,301},{272,322},{207,334},{206,365},{211,407},{247,388},{246,413},{270,377},{287,378},{270,407},{290,408},{306,378},{318,378},{330,377},{311,407},{331,406},{360,400},{388,400},{432,399},{496,398},{566,397},{609,398},{324,361},{376,362},{426,359},{470,362},{505,360},{558,360},{606,359},{637,364},{640,388},{637,417}
+final int lightposs[][][] = {
+  {// First floor
+    {213,81},{273,80},{322,70},{321,100},{355,55},{397,54},{348,78},{345,100},{364,87},{385,87},{408,80},{406,100},{431,94},{210,146},{209,189},{228,144},{227,190},{275,118},{331,117},{380,117},{274,170},{273,213},{273,262},{271,308},{273,360},{334,361},{395,359},{457,362},{519,360},{579,361},{208,255},{207,302},{208,352},{208,407},{268,377},{289,377},{271,404},{289,403},{311,407},{327,406},{368,400},{436,399},{501,398},{562,399},{612,402}
+  }
+  ,{// Second floor
+    {211,79},{252,77},{275,79},{294,66},{321,63},{292,88},{328,88},{352,75},{380,72},{404,73},{303,116},{368,117},{422,116},{210,147},{211,181},{265,153},{264,181},{288,167},{208,248},{208,301},{207,330},{209,383},{289,237},{247,238},{287,322},{246,322},{311,361},{377,360},{442,360},{511,360},{581,358},{270,404},{289,403},{308,403},{327,402},{368,400},{417,400},{451,401},{478,400},{506,399},{542,397},{578,397},{607,399}
+  }
+  ,{// Third floor
+    {210,78},{296,78},{341,77},{385,78},{208,163},{208,217},{210,269},{210,305},{210,341},{212,395},{344,116},{399,114},{266,158},{265,208},{267,284},{282,398},{310,407},{327,407},{364,397},{421,397},{479,396},{533,397},{588,399},{342,360},{395,361},{456,361},{516,361},{577,361}
+  }
 };
+final int lightpos[][] = lightposs[floor-1] ;
 
 SoftGeneralLightingImpl[] lights ;
 
+class ClickedPos{float x,y;};
+ArrayList<ClickedPos> clickedPosList ;
+
 void settings() {
-  bgImg = loadImage("FloorPlans/1.jpg");
+  bgImg = loadImage("FloorPlans/"+floor+".jpg");
   size(800,480);
   
-  lights = new SoftGeneralLightingImpl[lightpos.length] ;
-  for( int li=0;li<lightpos.length;++li ){
-    lights[li] = new SoftGeneralLightingImpl(lightpos[li][0],lightpos[li][1]) ;
+  if(bClickMode){
+    clickedPosList = new ArrayList<ClickedPos>() ;
+  } else {
+    lights = new SoftGeneralLightingImpl[lightpos.length] ;
+    for( int li=0;li<lightpos.length;++li ){
+      lights[li] = new SoftGeneralLightingImpl(lightpos[li][0],lightpos[li][1]) ;
+    }
+    println(lightpos.length+" lights defined.") ;
   }
-  println(lightpos.length+" lights defined.") ;
 }
 
-void setup() {  
+void setup(){
+  if(bClickMode) return ;
+  
   noCursor();
   /*  cp5 = new ControlP5(this);
   // The background image must be the same size as the parameters
@@ -36,20 +58,8 @@ void setup() {
 
   try {
       Echo.start( new MyNodeProfile(),lights);
-      /*
-      pw = aircon.mStatus[0]-0x30 ;
-      mode = aircon.mMode[0]-0x41 ;
-      temp = aircon.mTemperature[0] ;
-      light_pw = light.mStatus[0]-0x30 ;
-      blind_open = blind.mOpen[0]-0x41 ;
-      lock_locked = 0x42-lock.mLock[0] ;
-
-      room_temp_x10 = ((exTempSensor.mTemp[0]&0xff)<<8) | (exTempSensor.mTemp[1]&0xff) ;
-      if( room_temp_x10 > 0x8000 ) room_temp_x10 = room_temp_x10 - 0x10000 ;
-      */
   } catch( IOException e){ e.printStackTrace(); }
 
-  println("int[] lightpos = [");
 
 }
 
@@ -59,10 +69,25 @@ int randomOnOffCountdown = randomOnOffFreq ;
 
 boolean prevPressed = false ;
 void draw() {
-  if( mousePressed && !prevPressed ){
-    print("["+mouseX+","+mouseY+"],") ;
+  background(bgImg);
+  
+  if( bClickMode ){
+    if( mousePressed && !prevPressed ){
+      print("{"+mouseX+","+mouseY+"},") ;
+      ClickedPos cp = new ClickedPos() ;
+      cp.x = mouseX ;
+      cp.y = mouseY ;
+      
+      clickedPosList.add(cp) ;
+    }
+    prevPressed = mousePressed ;
+    
+    fill(255,0,0) ;
+    for( int cpi=0;cpi<clickedPosList.size();++cpi )
+      ellipse( clickedPosList.get(cpi).x  , clickedPosList.get(cpi).y ,5,5) ;
+    
+    return ;
   }
-  prevPressed = mousePressed ;
   
   if( bRandomOnOff ){
     if( --randomOnOffCountdown == 0 ){
@@ -71,7 +96,6 @@ void draw() {
     }
   }
   
-  background(bgImg);
     
   final int r = 11 ;
   for( int li=0;li<lights.length;++li ){
