@@ -64,7 +64,7 @@ void setup(){
 }
 
 boolean bRandomOnOff = true ;
-final int randomOnOffFreq = 30 ;
+final int randomOnOffFreq = 60 ;
 int randomOnOffCountdown = randomOnOffFreq ;
 
 boolean prevPressed = false ;
@@ -91,7 +91,7 @@ void draw() {
   
   if( bRandomOnOff ){
     if( --randomOnOffCountdown == 0 ){
-      randomOnOffCountdown = randomOnOffFreq ;
+      randomOnOffCountdown = randomOnOffFreq + (int)( (random(1)-0.5) * randomOnOffFreq ) ;
       lights[ (int)random(lights.length) ].setPowerBoolean( random(1)<0.5 ) ;
     }
   }
